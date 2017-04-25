@@ -1,0 +1,62 @@
+name:       high5-driver
+version:    1.0.0
+synopsis:   Driver application for the Internet High 5 Machine!
+maintainer: Noon van der Silk <noonsilk@gmail.com>
+license:    MIT
+category:   Development
+
+
+ghc-options: -Wall -fwarn-tabs
+
+
+default-extensions:
+  - OverloadedStrings
+  - NoImplicitPrelude
+
+
+dependencies:
+  - base >= 4.7 && < 5
+  - text
+  - free
+  - bytestring
+  - websockets
+  - mtl
+  - network
+  - async
+  - transformers
+  - network
+  - aeson
+  - lens
+  - process
+  - pipes
+  - pipes-websockets
+  - pipes-concurrency
+  - classy-prelude
+
+
+library:
+  source-dirs: src
+  exposed-modules:
+    - High5.Prelude
+    - Control.High5.App
+    - Control.High5.Machine
+    - Control.High5.Commands
+
+
+executables:
+  high5-driver:
+    ghc-options: -O2 -threaded
+    main: Main.hs
+    source-dirs: app
+    dependencies:
+      - high5-driver
+
+tests:
+  test:
+    cpp-options: -DTEST
+    main: Spec.hs
+    source-dirs:
+      - test
+      - src
+    dependencies:
+      - hspec
