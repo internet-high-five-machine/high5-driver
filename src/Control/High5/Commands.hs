@@ -13,7 +13,7 @@ import           Control.Lens                  ( (^.))
 import           Control.High5.Machine         (doHigh5
                                                , MachineResponse(..)
                                                )
-import qualified Network.WebSockets            as WS
+import qualified Wuss                          as WS
 
 
 
@@ -28,7 +28,6 @@ wsOperations = [ ((== "ping"),      ping       )
                , ((== "high5"),     high5      )
                ]
 
-
 -- |
 ping :: Command
 ping = const $ return "pong"
@@ -37,7 +36,8 @@ ping = const $ return "pong"
 -- | 
 high5 :: Command
 high5 _ = do
-    r <- lift doHigh5
+    appData <- ask
+    r <- lift $ doHigh5 appData
     case r of
          High5Success -> return "high5-success"
          High5Failure -> return "high5-failure"
@@ -54,11 +54,13 @@ configure raw = do
         Just cp -> doConfigure cp
 
 
--- dbg :: MonadIO m => Pipe Text Text m a
--- dbg = do
---     x <- await
---     putStrLn ("dbg: " ++ x)
---     yield x
+capture :: MonadIO m 
+      => Text 
+      -> Pipe Text Text m ()
+capture prefix = do
+    x <- await
+    putStrLn (prefix ++ x)
+    yield x
 
 
 -- | We need to kill the thread that was sitting and reading from the WS
@@ -89,12 +91,12 @@ doConfigure cp = do
         --
         -- Read from the mailbox, send it to the socket.
         fromMb :: WebSocketsT IO ()
-        fromMb = runEffect $ fromInput input >∞> wsOut
+        fromMb = runEffect $ fromInput input >-> (capture "ws out: ") >∞> wsOut
 
     -- Start the socket
     liftIO $ do
             let clientProc :: IO ()
-                clientProc = withSocketsDo $ WS.runClient h p u (\c -> do
+                clientProc = withSocketsDo $ WS.runSecureClient h p u (\c -> do
                                     void $ concurrently (runReaderT toMb c) (runReaderT fromMb c)
                              ) `catchAny` \_ -> do
                                  let m = appData ^. ioConsumer
@@ -110,5 +112,5 @@ doConfigure cp = do
     return "websocket connected"
   where
       h = cp ^. server
-      p = cp ^. port
+      p = 443 -- Insanity but necessary.
       u = cp ^. url

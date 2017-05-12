@@ -1,0 +1,2 @@
+exec:
+    machine-command      : ["./uarm-5.py"]

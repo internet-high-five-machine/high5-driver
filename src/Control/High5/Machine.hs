@@ -5,6 +5,10 @@ module Control.High5.Machine (
   where
 
 import High5.Prelude
+import System.Process (readProcessWithExitCode)
+import System.Exit (ExitCode(..))
+import Control.High5.Core
+import Control.Lens ((^.))
 
 data MachineResponse = 
       High5Success
@@ -12,7 +16,11 @@ data MachineResponse =
 
 
 -- | TODO: Communicate with the machine.
-doHigh5 :: IO MachineResponse
-doHigh5 = do
-    putStrLn "High 5 !"
-    return High5Success
+doHigh5 ::AppData -> IO MachineResponse
+doHigh5 appData = do
+    -- TODO: Add exception handling
+    let cmd:args = appData ^. settings ^. exec ^. machineCommand
+    (exitCode, _, _stderr) <-  readProcessWithExitCode cmd args ""
+    case exitCode of
+      ExitSuccess   -> return High5Success
+      ExitFailure _ -> return High5Failure

@@ -1,5 +1,5 @@
 name:       high5-driver
-version:    1.0.0
+version:    1.1.0
 synopsis:   Driver application for the Internet High 5 Machine!
 maintainer: Noon van der Silk <noonsilk@gmail.com>
 license:    MIT
@@ -16,22 +16,23 @@ default-extensions:
 
 dependencies:
   - base >= 4.7 && < 5
-  - text
-  - free
+  - aeson
+  - async
   - bytestring
-  - websockets
+  - classy-prelude
+  - free
+  - lens
   - mtl
   - network
-  - async
-  - transformers
-  - network
-  - aeson
-  - lens
-  - process
   - pipes
-  - pipes-websockets
   - pipes-concurrency
-  - classy-prelude
+  - pipes-websockets
+  - process
+  - text
+  - transformers
+  - websockets
+  - wuss
+  - yaml
 
 
 library:

@@ -13,9 +13,9 @@ module Control.High5.Core where
 
 import           High5.Prelude
 import           Pipes
-import           Control.Concurrent.Async      ( Async)
-import           Control.Lens                  ( makeFields)
-import           Data.Aeson                    ( ToJSON(..)
+import           Control.Concurrent.Async      (Async)
+import           Control.Lens                  (makeFields)
+import           Data.Aeson                    (ToJSON(..)
                                                , FromJSON(..)
                                                , Value(..)
                                                , object
@@ -25,7 +25,7 @@ import           Data.Aeson                    ( ToJSON(..)
 import qualified Data.ByteString.Lazy          as LB
 import qualified Data.Text                     as T
 import qualified Data.List                     as L
-
+import qualified Data.Yaml                     as Y
 
 -- | Forever fish.
 --
@@ -38,6 +38,25 @@ import qualified Data.List                     as L
 (>∞>) a b = forever a >-> forever b
 
 
+
+
+data ConfigureParameters = CP {
+      _configureParametersServer :: String
+    , _configureParametersUrl    :: String
+    , _configureParametersEmail  :: Text
+    , _configureParametersToken  :: Text
+    } deriving Show
+
+
+
+data Exec = Exec {
+    _execMachineCommand :: [String]
+    }
+
+data Settings = Settings {
+    _settingsExec :: Exec
+    }
+--
 -- | Data that we need to do application things.  
 data AppData = AppData {
     -- | The reference to the socket-listening process
@@ -47,9 +66,26 @@ data AppData = AppData {
     -- TODO: Make this `MonadIO`?
     , _appDataIoProducer       :: Producer Text IO () 
     , _appDataIoConsumer       :: Consumer Text IO ()
+    , _appDataSettings         :: Settings
     }
 
+
+instance FromJSON Settings where
+  parseJSON (Y.Object v) = Settings <$>
+    v .:   "exec"
+  parseJSON _ = fail "Expected Object for Settings value"
+
+instance FromJSON Exec where
+  parseJSON (Y.Object v) = Exec <$>
+    v .:   "machine-command"
+  parseJSON _ = fail "Expected Object for Settings value"
+
+
+
+$(makeFields ''Exec)
 $(makeFields ''AppData)
+$(makeFields ''Settings)
+$(makeFields ''ConfigureParameters)
 
 
 -- | Some monad transformer so that we can pass around data to ourself.
@@ -72,35 +108,22 @@ type Command = LB.ByteString -> DriverT IO Text
 type Op = (Text -> Bool, Command)
 
 
-data ConfigureParameters = CP {
-      _configureParametersServer :: String
-    , _configureParametersPort   :: Int
-    , _configureParametersUrl    :: String
-    , _configureParametersEmail  :: Text
-    , _configureParametersToken  :: Text
-    } deriving Show
-
-
-
-$(makeFields ''ConfigureParameters)
 
 instance FromJSON ConfigureParameters where
  parseJSON (Object o) =
     CP <$> o .: "server"
-       <*> o .: "port"
        <*> o .: "url"
        <*> o .: "email"
        <*> o .: "token"
  parseJSON _ = mzero
 
 instance ToJSON ConfigureParameters where
- toJSON (CP s p u e t) =
+ toJSON (CP s u e t) =
     object [ "server" .= s
-           , "port"   .= p
            , "url"    .= u
            , "email"  .= e
            , "token"  .= t
-             ]
+           ]
 
 
 -- | Our internal json format is "command jsonObject".
