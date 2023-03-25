@@ -18,3 +18,5 @@ cabal.sandbox.config
 # Stack-related
 .stack-work
 high5-driver.cabal
+
+conf

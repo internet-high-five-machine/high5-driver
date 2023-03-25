@@ -1,10 +1,10 @@
 resolver: lts-8.10
 packages:
   - .
-  - location:
-      git       : https://github.com/silky/pipes-websockets.git
-      commit    : v0.1.0.0
-    extra-dep: true
+
+extra-deps:
+  - git       : https://github.com/silky/pipes-websockets.git
+    commit    : v0.1.0.0
 
 flags: {}
 extra-package-dbs: []
